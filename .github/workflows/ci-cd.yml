@@ -8,8 +8,8 @@ on:
     branches: [main]
 
 jobs:
-  test:
-    name: Build and Test Application
+  test-and-build:
+    name: Test and Build Docker Image
     runs-on: ubuntu-latest
 
     steps:
@@ -29,4 +29,17 @@ jobs:
         run: npm test
 
       - name: Build Docker image
-        run: docker build -t cognevance-cicd-app .
+        run: docker build -t cognevance-cicd-app:latest .
+
+      - name: Log in to Docker Hub
+        if: github.event_name == 'push'
+        uses: docker/login-action@v3
+        with:
+          username: ${{ secrets.DOCKERHUB_USERNAME }}
+          password: ${{ secrets.DOCKERHUB_TOKEN }}
+
+      - name: Push image to Docker Hub
+        if: github.event_name == 'push'
+        run: |
+          docker tag cognevance-cicd-app:latest ${{ secrets.DOCKERHUB_USERNAME }}/cognevance-cicd-app:latest
+          docker push ${{ secrets.DOCKERHUB_USERNAME }}/cognevance-cicd-app:latest
